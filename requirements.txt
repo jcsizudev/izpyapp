@@ -1,1 +1,2 @@
 Flask==0.12.1
+pydocumentdb==2.3.1
