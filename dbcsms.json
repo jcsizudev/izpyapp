@@ -1,0 +1,6 @@
+{
+    "ENDPOINT": "https://izcsms.documents.azure.com:443/",
+    "MASTERKEY": "M5o1Lvfs5rne5c8fmAi7iqMaZ8GBKM882PjSP3VUWimDOILsFomC2SXAjKR48FRgjJ5j5MMewOjHeqxMocg52g==",
+    "DOCUMENTDB_DATABASE": "zax",
+    "DOCUMENTDB_COLLECTION": "entries"
+}
