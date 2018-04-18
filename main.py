@@ -26,5 +26,18 @@ def getContact(sorg, brand, contactid):
 
     return jsonify(res)
 
+@app.route('/api/<sorg>/<brand>/<page>/<pageline>', methods=['GET'])
+def getContactList(sorg, brand, page, pageline):
+    sql = 'SELECT * FROM entries e WHERE e.orgid = "{0}" and e.brandid = "{1}" order by e.orderno'.format(sorg, brand)
+    options = {
+        'enableCrossPartitionQuery': True,
+        'maxItemCount': 3
+    }
+
+    db = dbcsms.DbCsms()
+    res = db.execute('getPagingList', [sql, options, pageline, page])
+
+    return jsonify(res)
+
 if __name__ == '__main__':
     app.run()
