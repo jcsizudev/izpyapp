@@ -1,7 +1,10 @@
+import os
 import pydocumentdb
 import pydocumentdb.document_client as document_client
 from flask import Flask, render_template, request, jsonify
 import dbcsms
+from queries.getcontact import GetContact
+from queries.getcontactlist import GetContactList
 
 app = Flask(__name__)
 
@@ -12,32 +15,33 @@ def hello_world():
 
 @app.route('/api/<sorg>/<brand>/<contactid>', methods=['GET'])
 def getContact(sorg, brand, contactid):
-
-    query = {
-      'query': 'SELECT * FROM entries e WHERE e.id = "{0}" and e.orgid = "{1}" and e.brandid = "{2}"'.format(contactid, sorg, brand)
-    }
-
-    options = {} 
-    options['enableCrossPartitionQuery'] = True
-    options['maxItemCount'] = 2
-
+    q = GetContact()
+    query = q.createQuery(sorg, brand, contactid)
     db = dbcsms.DbCsms()
-    res = db.query(query, options)
-
+    res = db.query(query['query'], query['options'])
     return jsonify(res)
 
 @app.route('/api/<sorg>/<brand>/<page>/<pageline>', methods=['GET'])
 def getContactList(sorg, brand, page, pageline):
-    sql = 'SELECT * FROM entries e WHERE e.orgid = "{0}" and e.brandid = "{1}" order by e.orderno'.format(sorg, brand)
-    options = {
-        'enableCrossPartitionQuery': True,
-        'maxItemCount': 3
-    }
+    # クエリパラメータ
+    sortitem = request.args.get('sortitem', default='', type=str)
+    sortdir = request.args.get('sortdir', default='', type=str)
+    contactname = request.args.get('contactname', default='', type=str)
+    activeflag = request.args.get('activeflag', default=-1, type=int)
 
+    # クエリ作成
+    q = GetContactList()
+    query = q.createQuery(sorg, brand, sortitem, sortdir, contactname, activeflag)
+
+    # クエリ実行
     db = dbcsms.DbCsms()
-    res = db.execute('getPagingList', [sql, options, pageline, page])
-
+    res = db.execute('getPagingList', [query['query'], query['options'], int(pageline), int(page)])
     return jsonify(res)
 
 if __name__ == '__main__':
+    # ローカル環境の強制停止用にプロセスID出力
+    if os.getenv('USERNAME') == 'izu_t':
+        print('taskkill /pid {0} /F'.format(os.getpid()))
+
+    # スタート
     app.run()
