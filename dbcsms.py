@@ -7,6 +7,7 @@ import json
 
 class DbCsms:
     """ データベースアクセスクラス """
+    dc = None
 
     # コンストラクタ
     def __init__(self):
@@ -21,21 +22,39 @@ class DbCsms:
         self.sproc_pref = self.collection_id + '/sprocs/'
 
         # 接続クライアント作成
-        self.client = document_client.DocumentClient(self.config['ENDPOINT'], {'masterKey': self.config['MASTERKEY']})
+        if DbCsms.dc == None:
+            DbCsms.dc = document_client.DocumentClient(self.config['ENDPOINT'], {'masterKey': self.config['MASTERKEY']})
+        self.client = DbCsms.dc
 
         # 対象コレクション設定
         self.collection = self.client.ReadCollection(self.collection_id)
 
     # クエリー発行
     def query(self, query, options):
-        result_iterable = self.client.QueryDocuments(self.collection_id, query, options)
-        res = list(result_iterable)
+        try:
+            result_iterable = self.client.QueryDocuments(self.collection_id, query, options)
+            res = list(result_iterable)
+        except Exception as ex:
+            res = [
+                {'error': ex.__str__()}
+            ]
+
         return res
 
     # ストアド実行
     def execute(self, sp, params):
-        result_str = self.client.ExecuteStoredProcedure(self.sproc_pref + sp, params)
-        res = json.loads(result_str)
+        res = []
+        try:
+            result_str = self.client.ExecuteStoredProcedure(self.sproc_pref + sp, params)
+            print(result_str)
+            res = json.loads(result_str)
+            pass
+        except Exception as ex:
+            res = [
+                {'error': ex.__str__()},
+                {'errordata': result_str}
+            ]
+
         return res
 
 if __name__ == '__main__':
